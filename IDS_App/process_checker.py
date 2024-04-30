@@ -11,18 +11,20 @@ class ProcessChecker:
                 self.process_list.append(process_instance)
 
     def check_running(self):
+        result = ""
         for process in self.process_list:
             process_found = False
             for proc in psutil.process_iter(['pid', 'name']):
                 try:
                     if process.lower() in proc.info['name'].lower():
                         process_found = True
-                        print(f"\n{process} process FOUND:\n   Name: {proc.info['name']}\n   PID: {proc.info['pid']}\n")
+                        result += f"\n{process} process FOUND:\n   Name: {proc.info['name']}\n   PID: {proc.info['pid']}\n"
                 except psutil.ZombieProcess:
-                    print(f"Zombie process detected for {proc.info['name']}; process in terminated state")
+                    result += f"Zombie process detected for {proc.info['name']}; process in terminated state"
                 except psutil.NoSuchProcess:
-                    print(f"No suck process: {proc.info['name']}")
+                    result += f"No suck process: {proc.info['name']}"
                 except psutil.AccessDenied:
-                    print("Access denied.")
+                    result += "Access denied."
             if not process_found:
-                print(f"{process} process not found.")
+                result += f"{process} process not found.\n"
+        return result
