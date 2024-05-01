@@ -1,3 +1,4 @@
+import datetime
 import psutil
 
 
@@ -13,18 +14,20 @@ class ProcessChecker:
     def check_running(self):
         result = ""
         for process in self.process_list:
+            timestamp = datetime.datetime.now()
             process_found = False
             for proc in psutil.process_iter(['pid', 'name']):
+                timestamp = datetime.datetime.now()
                 try:
                     if process.lower() in proc.info['name'].lower():
                         process_found = True
-                        result += f"\n{process} process FOUND:\n   Name: {proc.info['name']}\n   PID: {proc.info['pid']}\n"
+                        result += f"\n{timestamp}: {process} process FOUND:\n   Name: {proc.info['name']}\n   PID: {proc.info['pid']}\n"
                 except psutil.ZombieProcess:
-                    result += f"Zombie process detected for {proc.info['name']}; process in terminated state"
+                    result += f"{timestamp}: Zombie process detected for {proc.info['name']}; process in terminated state"
                 except psutil.NoSuchProcess:
-                    result += f"No suck process: {proc.info['name']}"
+                    result += f"{timestamp}: No suck process: {proc.info['name']}"
                 except psutil.AccessDenied:
-                    result += "Access denied."
+                    result += f"{timestamp}: Access denied."
             if not process_found:
-                result += f"{process} process not found.\n"
+                result += f"{timestamp}: {process} process not found.\n"
         return result
