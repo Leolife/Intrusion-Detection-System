@@ -5,15 +5,15 @@ import psutil
 class ProcessChecker:
 
     def __init__(self, process_file_name):
-        self.process_list = []
+        self._process_list = []
         with open(f"{process_file_name}.txt") as process_file:
             for line in process_file:
                 process_instance = line.strip()
-                self.process_list.append(process_instance)
+                self._process_list.append(process_instance)
 
     def check_running(self):
         result = ""
-        for process in self.process_list:
+        for process in self._process_list:
             timestamp = datetime.datetime.now()
             process_found = False
             for proc in psutil.process_iter(['pid', 'name']):

@@ -1,5 +1,6 @@
 import os
 import process_checker
+import port_scan
 
 
 def create_directory(dir_name, parent_dir_path):  # creates directory if one does not already exist
@@ -27,19 +28,20 @@ def create_file(output, dir_name, parent_dir_path):  # creates file for scan res
 
 def main():
 
+    results = ""
+
     print("\n--Process Checker--\n")
-
     process_list = "process_list"  # set this to the name of the txt file
-
     process = process_checker.ProcessChecker(process_list)
+    results += process.check_running()
 
-    checker_result = process.check_running()
+    print("\n--Port Scan--\n")
+    scan = port_scan.PortScan()
+    results += scan.search_for_packets()
 
     dir_name = input("\nName of desired directory for scan results: ")
-
     parent_dir_path = input("\nParent directory path: ")
-
-    create_file(checker_result, dir_name, parent_dir_path)
+    create_file(results, dir_name, parent_dir_path)
 
     print("\n--Process Check Complete--\n")
 
