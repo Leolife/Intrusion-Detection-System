@@ -17,7 +17,8 @@ class PortScan:
             if TCP in ip_packet:
                 tcp_packet = ip_packet[TCP]
                 if tcp_packet.dport in self._target_ports:
-                    filtered_packet = f"\nPacket found on port {tcp_packet.dport}: {packet.summary()}"
+                    timestamp = datetime.now()
+                    filtered_packet = f"\n{timestamp}: Packet found on port {tcp_packet.dport}: {packet.summary()}"
                     self.filtered_packets.append(filtered_packet)
 
     def search_for_packets(self):
@@ -26,5 +27,6 @@ class PortScan:
         for packets in self.filtered_packets:
             result += packets
         if not self.filtered_packets:
-            result += "No traffic found on ports 80, 21, 23, 25, 69, 110, 161, 162"
+            timestamp = datetime.now()
+            result += f"{timestamp}: No traffic found on ports 80, 21, 23, 25, 69, 110, 161, 162"
         return result
