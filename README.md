@@ -15,7 +15,7 @@ Homebrewed intrusion detection system to bypass logic checks in malware that che
 
 ## Setup & Run Instructions
 - **If you have not changed anything, locate line 24 of port_scan.py and change the timeout length to desired scan time length**
-- This script needs to be run as root in order to acces raw sockets for port scanning purposes.  In order to accomplish this, do the following:
+- This script needs to be run as root in order to access raw sockets for port scanning purposes.  In order to accomplish this, do the following:
   1) On your command line, go to the your folder containing the this Intrusion-Detection-System python files
   2) Install '[scapy](https://github.com/secdev/scapy)' library for python in sudo with following command:
      - sudo pip install scapy
