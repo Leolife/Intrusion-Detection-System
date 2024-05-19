@@ -55,7 +55,7 @@ def main():
         results = ""
         print("\n--Monitoring CPU--\n")
         monitor_instance = monitor.Monitor()
-        results += monitor_instance.monitor_cpu(80)
+        results += monitor_instance.monitor_cpu(80)  # change this argument to set CPU % threshold
         timestamp = datetime.datetime.now()
         file_name = f"process_snapshot_{timestamp}.txt"
         create_file(results, dir_name, parent_dir_path, file_name)
