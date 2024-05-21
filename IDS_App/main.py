@@ -26,6 +26,7 @@ def create_file(output, dir_name, parent_dir_path, output_file):  # creates file
         file_path = os.path.join(folder_path, output_file)
     with open(file_path, "w") as directory:
         directory.write(output)
+    return file_path
 
 
 def main():
@@ -44,12 +45,12 @@ def main():
         create_file(results, dir_name, parent_dir_path, file_name)
         print("\n--Process Check Complete--\n")
     elif option == "2":  # port scan
-        results = ""
         print("\n--Port Scan--\n")
         file_name = input("Output file name: ")
-        scan = port_scan.PortScan()
-        results += scan.search_for_packets()
-        create_file(results, dir_name, parent_dir_path, file_name)
+        file_path = create_file("", dir_name, parent_dir_path, file_name)  # create file first to get path
+        with open(file_path, "a") as file_handle:  # open file in append mode for real-time updates
+            scan = port_scan.PortScan(file_handle)
+            scan.search_for_packets()
         print("\n--Port Scan Complete--\n")
     elif option == "3":  # Monitor CPU
         results = ""
