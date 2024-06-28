@@ -1,4 +1,5 @@
 import datetime
+import isolation_forest
 import monitor
 import os
 import process_checker
@@ -55,8 +56,8 @@ def main():
     elif option == "3":  # Monitor CPU
         results = ""
         print("\n--Monitoring CPU--\n")
-        monitor_instance = monitor.Monitor()
-        results += monitor_instance.monitor_cpu(80)  # change this argument to set CPU % threshold
+        iso_forest_monitor = isolation_forest.isolation_forest_monitor()
+        results += iso_forest_monitor.begin_monitor()  # currently does not add all running processes like previous
         timestamp = datetime.datetime.now()
         file_name = f"process_snapshot_{timestamp}.txt"
         create_file(results, dir_name, parent_dir_path, file_name)
