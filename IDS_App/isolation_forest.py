@@ -4,7 +4,7 @@ import pandas as pd
 from sklearn.ensemble import IsolationForest
 
 
-class isolation_forest_monitor:
+class IsolationForestMonitor:
 
     def __init__(self):
         cpu_data = self.collect_cpu_usage()
@@ -12,7 +12,7 @@ class isolation_forest_monitor:
 
         cpu_data['timestamp'] = pd.to_datetime(cpu_data['timestamp'], unit='s')
         cpu_data.set_index('timestamp', inplace=True)
-        self.cpu_data_resampled = cpu_data.resample('1T').mean()
+        self.cpu_data_resampled = cpu_data.resample('1min').mean()
 
         self.model = IsolationForest(contamination=0.01)  # small % to reduce false positives; subject to change
         self.model.fit(self.cpu_data_resampled[['cpu_usage']])
@@ -35,7 +35,8 @@ class isolation_forest_monitor:
             current_cpu_usage = psutil.cpu_percent(interval=1)
             new_data.append((current_time, current_cpu_usage))
 
-            prediction = model.predict([[current_cpu_usage]])
+            current_data_df = pd.DataFrame([[current_cpu_usage]], columns=['cpu_usage'])
+            prediction = model.predict(current_data_df)
             if prediction == -1 or current_cpu_usage > threshold:
                 return f"Anomaly detected at {current_time}: {current_cpu_usage}%"
 
@@ -46,7 +47,7 @@ class isolation_forest_monitor:
                 new_data = []
 
     def retrain_model(self, new_data, model):
-        combined_data = pd.concat([self.cpu_data_resampled, new_data.resample('1T').mean()])
+        combined_data = pd.concat([self.cpu_data_resampled, new_data.resample('1min').mean()])
         model.fit(combined_data[['cpu_usage']])
         self.cpu_data_resampled = combined_data
         self.cpu_data_resampled.to_csv("cpu_usage_data.csv", index=False)
