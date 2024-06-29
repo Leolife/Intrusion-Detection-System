@@ -56,10 +56,10 @@ def main():
     elif option == "3":  # Monitor CPU
         results = ""
         print("\n--Monitoring CPU--\n")
-        iso_forest_monitor = isolation_forest.isolation_forest_monitor()
+        iso_forest_monitor = isolation_forest.IsolationForestMonitor()
         results += iso_forest_monitor.begin_monitor()  # currently does not add all running processes like previous
         timestamp = datetime.datetime.now()
-        file_name = f"process_snapshot_{timestamp}.txt"
+        file_name = f"process_snapshot_{timestamp}"
         create_file(results, dir_name, parent_dir_path, file_name)
         print("\n--Monitoring CPU Complete--\n")
     else:
