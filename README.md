@@ -1,9 +1,9 @@
 # Intrusion-Detection-System
-Homebrewed intrusion detection system to bypass logic checks in malware that check for common malware analysis and monitoring tools.
+Intrusion detection system to bypass logic checks in malware that check for common malware analysis and monitoring tools.
 
 ## Features
-- CPU monitor that takes snapshot of running processes if CPU usage reaches a default threshold of 80%
-  - threshold can be changed in main.py on line 59
+- CPU monitor that uses machine learning (Isolation Forest algorithm) to detect anomalies in CPU usage and upon detection will log running processes and 
+system metrics for further forensic analysis
 - Real time port scanning to check for traffic on insecure ports:
   - HTTP: port 80
   - FTP: port 21
@@ -17,9 +17,12 @@ Homebrewed intrusion detection system to bypass logic checks in malware that che
 
 ## Setup & Run Instructions
 - **If you have not changed anything, locate line 26 of port_scan.py and change the timeout length to desired scan time length**
-- This script needs to be run as root in order to access raw sockets for port scanning purposes.  In order to accomplish this, do the following:
+- This script needs to be run as root in order to access raw sockets for port scanning purposes and for CPU monitoring.  In order to accomplish this, do the following:
   1) On your command line, go to the your folder containing the this Intrusion-Detection-System python files
-  2) Install '[scapy](https://github.com/secdev/scapy)' library for python in sudo with following command:
+  2) Install '[scapy](https://github.com/secdev/scapy)', '[pandas](https://github.com/pandas-dev/pandas)', '[scikit-learn](https://github.com/scikit-learn/scikit-learn)' 
+libraries for python in sudo with following commands:
      - sudo pip install scapy
+     - sudo pip install pandas
+     - sudo pip install scikit-learn
   3) Run main.py as root with the following command:
      - sudo python3 main.py
