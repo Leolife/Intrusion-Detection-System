@@ -37,7 +37,10 @@ class IsolationForestMonitor:
 
             current_data_df = pd.DataFrame([[current_cpu_usage]], columns=['cpu_usage'])
             prediction = model.predict(current_data_df)
-            if prediction == -1 or current_cpu_usage > threshold:
+
+            latest_resampled_cpu = self.cpu_data_resampled['cpu_usage'].iloc[-1]
+
+            if current_cpu_usage > latest_resampled_cpu and (prediction == -1 or current_cpu_usage > threshold):
                 return f"Anomaly detected at {current_time}: {current_cpu_usage}%"
 
             if len(new_data) >= 60:
