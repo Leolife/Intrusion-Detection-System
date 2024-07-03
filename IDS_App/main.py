@@ -53,15 +53,15 @@ def main():
             scan = port_scan.PortScan(file_handle)
             scan.search_for_packets()
         print("\n--Port Scan Complete--\n")
-    elif option == "3":  # Monitor CPU
+    elif option == "3":  # Machine learning monitor
         results = ""
-        print("\n--Monitoring CPU--\n")
+        print("\n--Monitoring System--\n")
         iso_forest_monitor = isolation_forest.IsolationForestMonitor()
         results += iso_forest_monitor.begin_monitor()  # currently does not add all running processes like previous
         timestamp = datetime.datetime.now()
         file_name = f"process_snapshot_{timestamp}"
         create_file(results, dir_name, parent_dir_path, file_name)
-        print("\n--Monitoring CPU Complete--\n")
+        print("\n--Monitoring System Complete--\n")
     else:
         print("Choose a valid integer corresponding to the number of desired option.")
 

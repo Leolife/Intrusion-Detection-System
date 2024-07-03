@@ -51,7 +51,7 @@ class IsolationForestMonitor:
             time.sleep(interval - 1)
         return pd.DataFrame(data, columns=["timestamp", "cpu_usage", "mem_usage", "net_usage", "gpu_usage"])
 
-    def monitor_cpu_usage(self, threshold):  # threshold for a hard-coded % to take a snapshot
+    def monitor_usage(self, threshold):  # threshold for a hard-coded % to take a snapshot
         new_data = []
         while True:
             current_time = pd.Timestamp.now()
@@ -61,9 +61,10 @@ class IsolationForestMonitor:
             net_usage = (net_io.bytes_sent + net_io.bytes_recv) / (1024 * 1024)  # in MB
             try:  # ensure that there exists GPU(s) on the machine
                 gpus = GPUtil.getGPUs()
-                gpu_usage = gpus[0].load * 100 if gpus else 0
-            except:
-                gpu_usage = 0
+                gpu_usage = gpus[0].load * 100 if gpus else "N/A"
+            except Exception as e:
+                print(f"Error accessing GPU information: {e}")
+                gpu_usage = "N/A"
 
             current_usage = [cpu_usage, mem_usage, net_usage, gpu_usage]
             new_data.append((current_time, *current_usage))
@@ -92,10 +93,22 @@ class IsolationForestMonitor:
             prediction = self.model.predict(normalized_current)
 
             latest_resampled = self.usage_data_resampled.iloc[-1]
-            is_above_baseline = (current_data_df.values > latest_resampled.values).any()
+            if isinstance(gpu_usage, (int, float)):
+                is_above_baseline = (current_data_df.values[0] > latest_resampled.values).any()
+            else:
+                # If GPU usage is "N/A" compare only CPU, Memory, Network
+                is_above_baseline = (current_data_df.values[0][:3] > latest_resampled.values[:3]).any()
 
-            if is_above_baseline and (prediction == -1 or any(metric > threshold for metric in current_usage)):
-                return f"Anomaly detected at {current_time}: {current_usage}"
+            threshold_exceeded = (  # only want to apply the threshold to CPU, memory, and GPU
+                    cpu_usage > threshold or
+                    mem_usage > threshold or
+                    (gpu_usage > threshold if gpu_usage > 0 else False)
+            )
+
+            if is_above_baseline and (prediction == -1 or threshold_exceeded):
+                return (f"Anomaly detected at {current_time}: \n\tCPU: {cpu_usage}% "
+                        f"\n\tMemory: {mem_usage}% \n\tNetwork: {net_usage:.2f} MB "
+                        f"\n\tGPU: {gpu_usage}{'%' if isinstance(gpu_usage, (int, float)) else ''}")
 
             if len(new_data) >= 60:
                 new_df = pd.DataFrame(new_data,
@@ -132,4 +145,4 @@ class IsolationForestMonitor:
         print("Model retrained with new data.")
 
     def begin_monitor(self):
-        return self.monitor_cpu_usage(95)
+        return self.monitor_usage(95)
