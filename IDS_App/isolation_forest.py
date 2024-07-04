@@ -102,7 +102,7 @@ class IsolationForestMonitor:
             threshold_exceeded = (  # only want to apply the threshold to CPU, memory, and GPU
                     cpu_usage > threshold or
                     mem_usage > threshold or
-                    (gpu_usage > threshold if gpu_usage > 0 else False)
+                    (isinstance(gpu_usage, (int, float)) and gpu_usage > threshold)
             )
 
             if is_above_baseline and (prediction == -1 or threshold_exceeded):
@@ -118,7 +118,17 @@ class IsolationForestMonitor:
                 new_data = []
 
     def retrain_model(self, new_data):
-        combined_data = pd.concat([self.usage_data_resampled, new_data.resample('1min').mean()])
+        # Replace 'N/A' with 0 in gpu_usage column
+        new_data['gpu_usage'] = new_data['gpu_usage'].apply(lambda x: 0 if x == "N/A" else x)
+
+        # Ensure gpu_usage is numeric
+        new_data['gpu_usage'] = pd.to_numeric(new_data['gpu_usage'], errors='coerce')
+
+        # Resample new_data
+        new_data_resampled = new_data.resample('1min').mean()
+
+        # Combine with existing data
+        combined_data = pd.concat([self.usage_data_resampled, new_data_resampled])
 
         # Handle potential division by zero during normalization
         self.normalized_data = combined_data.copy()
