@@ -32,7 +32,7 @@ class IsolationForestMonitor:
         self.model = IsolationForest(contamination=0.01)  # small % to reduce false positives; subject to change
         self.model.fit(self.normalized_data)
 
-    def collect_usage_data(self, duration=60, interval=5):
+    def collect_usage_data(self, duration=3600, interval=5):  # anomaly detection will begin after the first duration
         data = []
         start_time = time.time()
         while time.time() - start_time < duration:
@@ -105,7 +105,7 @@ class IsolationForestMonitor:
                     (isinstance(gpu_usage, (int, float)) and gpu_usage > threshold)
             )
 
-            if is_above_baseline and (prediction == -1 or threshold_exceeded):
+            if threshold_exceeded or (is_above_baseline and prediction == -1):
                 return (f"Anomaly detected at {current_time}: \n\tCPU: {cpu_usage}% "
                         f"\n\tMemory: {mem_usage}% \n\tNetwork: {net_usage:.2f} MB "
                         f"\n\tGPU: {gpu_usage}{'%' if isinstance(gpu_usage, (int, float)) else ''}")
