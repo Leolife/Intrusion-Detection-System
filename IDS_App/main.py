@@ -65,6 +65,7 @@ def main():
 
         results = ml_results + "\n\n" + snapshot_results
         create_file(results, dir_name, parent_dir_path, file_name)
+        print(f"Snapshot saved to {file_name}")
         print("\n--Monitoring System Complete--\n")
     else:
         print("Choose a valid integer corresponding to the number of desired option.")
