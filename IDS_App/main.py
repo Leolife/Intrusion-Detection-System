@@ -56,17 +56,22 @@ def main():
     elif option == "3":  # Machine learning system monitor
         print("\n--Monitoring System--\n")
         iso_forest_monitor = isolation_forest.IsolationForestMonitor()
-        ml_results = iso_forest_monitor.begin_monitor()
-
-        timestamp = datetime.datetime.now()
-        file_name = f"process_snapshot_{timestamp}"
-        process_snapshot = monitor.Monitor()
-        snapshot_results = process_snapshot.snapshot_processes()
-
-        results = ml_results + "\n\n" + snapshot_results
-        create_file(results, dir_name, parent_dir_path, file_name)
-        print(f"Snapshot saved to {file_name}")
-        print("\n--Monitoring System Complete--\n")
+        #  there is a pause here during the first round of collecting data to train the model, then code will continue
+        print("Starting continuous monitoring. Press Ctrl+C to stop.")
+        try:
+            iso_forest_monitor.begin_monitor(
+                lambda anomaly_message: (
+                    create_file(
+                        anomaly_message + "\n\n" + monitor.Monitor().snapshot_processes(),
+                        dir_name,
+                        parent_dir_path,
+                        f"anomaly_snapshot_{datetime.datetime.now()}"
+                    ),
+                    print(f"Anomaly detected at approximately {datetime.datetime.now()}")
+                )[-1]
+            )
+        except KeyboardInterrupt:
+            print("\n--Monitoring System Stopped--\n")
     else:
         print("Choose a valid integer corresponding to the number of desired option.")
 
