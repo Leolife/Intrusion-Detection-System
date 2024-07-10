@@ -51,7 +51,7 @@ class IsolationForestMonitor:
             time.sleep(interval - 1)
         return pd.DataFrame(data, columns=["timestamp", "cpu_usage", "mem_usage", "net_usage", "gpu_usage"])
 
-    def monitor_usage(self, threshold):  # threshold for a hard-coded % to take a snapshot
+    def monitor_usage(self, threshold, callback):  # threshold for a hard-coded % to take a snapshot
         new_data = []
         while True:
             current_time = pd.Timestamp.now()
@@ -106,9 +106,10 @@ class IsolationForestMonitor:
             )
 
             if threshold_exceeded or (is_above_baseline and prediction == -1):
-                return (f"Anomaly detected at {current_time}: \n\tCPU: {cpu_usage}% "
-                        f"\n\tMemory: {mem_usage}% \n\tNetwork: {net_usage:.2f} MB "
-                        f"\n\tGPU: {gpu_usage}{'%' if isinstance(gpu_usage, (int, float)) else ''}")
+                anomaly_message = (f"Anomaly detected at {current_time}: \n\tCPU: {cpu_usage}% "
+                                   f"\n\tMemory: {mem_usage}% \n\tNetwork: {net_usage:.2f} MB "
+                                   f"\n\tGPU: {gpu_usage}{'%' if isinstance(gpu_usage, (int, float)) else ''}")
+                callback(anomaly_message)
 
             if len(new_data) >= 60:
                 new_df = pd.DataFrame(new_data,
@@ -154,5 +155,5 @@ class IsolationForestMonitor:
         self.usage_data_resampled.to_csv("usage_data.csv", index=False)
         print("Model retrained with new data.")
 
-    def begin_monitor(self):
-        return self.monitor_usage(95)
+    def begin_monitor(self, callback):
+        return self.monitor_usage(95, callback)
