@@ -10,7 +10,7 @@ class IsolationForestMonitor:
 
     def __init__(self):
         usage_data = self.collect_usage_data()
-        usage_data.to_csv("cpu_usage_data.csv", index=False)
+        usage_data.to_csv("usage_data.csv", index=False)
 
         usage_data['timestamp'] = pd.to_datetime(usage_data['timestamp'], unit='s')
         usage_data.set_index('timestamp', inplace=True)
