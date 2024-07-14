@@ -10,10 +10,11 @@ class IsolationForestMonitor:
 
     def __init__(self):
         usage_data = self.collect_usage_data()
-        usage_data.to_csv("usage_data.csv", index=False)
 
-        usage_data['timestamp'] = pd.to_datetime(usage_data['timestamp'], unit='s')
+        # Save with index (timestamp) included
         usage_data.set_index('timestamp', inplace=True)
+        usage_data.to_csv("usage_data.csv", index=True)
+
         self.usage_data_resampled = usage_data.resample('1min').mean()
 
         # Handle potential division by zero during normalization
@@ -30,13 +31,13 @@ class IsolationForestMonitor:
         self.normalized_data = self.normalized_data.fillna(0)
 
         self.model = IsolationForest(contamination=0.01)  # small % to reduce false positives; subject to change
-        self.model.fit(self.normalized_data)
+        self.model.fit(self.normalized_data.values)
 
     def collect_usage_data(self, duration=3600, interval=5):  # anomaly detection will begin after the first duration
         data = []
         start_time = time.time()
         while time.time() - start_time < duration:
-            timestamp = time.time()
+            timestamp = pd.Timestamp.now().floor('s')
             cpu_usage = psutil.cpu_percent(interval=1)
             mem_usage = psutil.virtual_memory().percent
             net_io = psutil.net_io_counters()
@@ -54,7 +55,7 @@ class IsolationForestMonitor:
     def monitor_usage(self, threshold, callback):  # threshold for a hard-coded % to take a snapshot
         new_data = []
         while True:
-            current_time = pd.Timestamp.now()
+            current_time = pd.Timestamp.now().floor('s')
             cpu_usage = psutil.cpu_percent(interval=1)
             mem_usage = psutil.virtual_memory().percent
             net_io = psutil.net_io_counters()
@@ -90,7 +91,7 @@ class IsolationForestMonitor:
             # Ensure the data is in the correct format for the model
             normalized_current_array = normalized_current.values.astype(np.float64)
 
-            prediction = self.model.predict(normalized_current)
+            prediction = self.model.predict(normalized_current_array)
 
             latest_resampled = self.usage_data_resampled.iloc[-1]
             if isinstance(gpu_usage, (int, float)):
@@ -118,6 +119,8 @@ class IsolationForestMonitor:
                 self.retrain_model(new_df)
                 new_data = []
 
+            time.sleep(5)
+
     def retrain_model(self, new_data):
         # Replace 'N/A' with 0 in gpu_usage column
         new_data['gpu_usage'] = new_data['gpu_usage'].apply(lambda x: 0 if x == "N/A" else x)
@@ -125,11 +128,8 @@ class IsolationForestMonitor:
         # Ensure gpu_usage is numeric
         new_data['gpu_usage'] = pd.to_numeric(new_data['gpu_usage'], errors='coerce')
 
-        # Resample new_data
-        new_data_resampled = new_data.resample('1min').mean()
-
-        # Combine with existing data
-        combined_data = pd.concat([self.usage_data_resampled, new_data_resampled])
+        # Combine with existing data (without resampling)
+        combined_data = pd.concat([self.usage_data_resampled, new_data])
 
         # Handle potential division by zero during normalization
         self.normalized_data = combined_data.copy()
@@ -152,7 +152,7 @@ class IsolationForestMonitor:
 
         self.model.fit(normalized_data_array)
         self.usage_data_resampled = combined_data
-        self.usage_data_resampled.to_csv("usage_data.csv", index=False)
+        self.usage_data_resampled.to_csv("usage_data.csv", index=True)
         print("Model retrained with new data.")
 
     def begin_monitor(self, callback):
