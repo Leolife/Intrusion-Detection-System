@@ -54,7 +54,7 @@ def main():
             scan.search_for_packets()
         print("\n--Port Scan Complete--\n")
     elif option == "3":  # Machine learning system monitor
-        print("\n--Starting System Monitor--\n\tTraining Model\n\tThis may take a while...")
+        print("\n--Starting System Monitor--\n\tTraining model...\n\tThis may take a while...")
         iso_forest_monitor = isolation_forest.IsolationForestMonitor()
         #  there is a pause here during the first round of collecting data to train the model, then code will continue
         print("Starting continuous monitoring. Press Ctrl+C to stop.")
