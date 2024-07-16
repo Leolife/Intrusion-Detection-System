@@ -62,10 +62,9 @@ class IsolationForestMonitor:
             net_usage = (net_io.bytes_sent + net_io.bytes_recv) / (1024 * 1024)  # in MB
             try:  # ensure that there exists GPU(s) on the machine
                 gpus = GPUtil.getGPUs()
-                gpu_usage = gpus[0].load * 100 if gpus else "N/A"
-            except Exception as e:
-                print(f"Error accessing GPU information: {e}")
-                gpu_usage = "N/A"
+                gpu_usage = gpus[0].load * 100 if gpus else 0
+            except:
+                gpu_usage = 0
 
             current_usage = [cpu_usage, mem_usage, net_usage, gpu_usage]
             new_data.append((current_time, *current_usage))
@@ -153,7 +152,9 @@ class IsolationForestMonitor:
         self.model.fit(normalized_data_array)
         self.usage_data_resampled = combined_data
         self.usage_data_resampled.to_csv("usage_data.csv", index=True)
-        print("Model retrained with new data.")
+        print(f"{pd.Timestamp.now()}: Model retrained with new data.\n")  # printed to terminal
+        with open("retraining_logs.txt", "a") as file:
+            file.write(f"{pd.Timestamp.now()}: Model retrained with new data.\n")
 
     def begin_monitor(self, callback):
         return self.monitor_usage(95, callback)
