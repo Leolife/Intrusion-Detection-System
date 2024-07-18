@@ -34,8 +34,9 @@ def main():
 
     dir_name = input("Name of desired directory for results: ")
     parent_dir_path = input("Parent directory path: ")
-    option = (input("\nChoose an option:\n   1) Check for specific processes\n"
-                    "   2) Port Scan\n   3) Monitor CPU\n >>"))
+    option = (input("\nChoose an option:\n\t1) Check for specific processes\n\t"
+                    "2) Port Scan\n\t3) Monitor CPU without existing data\n\t"
+                    "4) Monitor CPU with existing data\n\t >> "))
     if option == "1":  # check for specific processes
         results = ""
         print("\n--Process Checker--\n")
@@ -53,7 +54,7 @@ def main():
             scan = port_scan.PortScan(file_handle)
             scan.search_for_packets()
         print("\n--Port Scan Complete--\n")
-    elif option == "3":  # Machine learning system monitor
+    elif option == "3":  # Using machine learning system monitor WITHOUT previous training data
         print("\n--Starting System Monitor--\n\tTraining model...\n\tThis may take a while...")
         iso_forest_monitor = isolation_forest.IsolationForestMonitor()
         #  there is a pause here during the first round of collecting data to train the model, then code will continue
@@ -72,6 +73,26 @@ def main():
             )
         except KeyboardInterrupt:
             print("\n--System Monitor Stopped--\n")
+    elif option == "4":  # Resume monitoring OR # Using machine learning system monitor WITH previous training data
+        if os.path.exists("usage_data.csv"):
+            iso_forest_monitor = isolation_forest.IsolationForestMonitor(load_existing=True)
+            print("Resuming continuous monitoring. Press Ctrl+C to stop.")
+            try:
+                iso_forest_monitor.begin_monitor(
+                    lambda anomaly_message: (
+                        create_file(
+                            anomaly_message + "\n\n" + monitor.Monitor().snapshot_processes(),
+                            dir_name,
+                            parent_dir_path,
+                            f"anomaly_snapshot_{datetime.datetime.now()}"
+                        ),
+                        print(f"Anomaly detected at approximately {datetime.datetime.now()}")
+                    )[-1]
+                )
+            except KeyboardInterrupt:
+                print("\n--System Monitor Stopped--\n")
+        else:
+            print("No existing data found. Please use option 3 to train the model or import your own training data.")
     else:
         print("Choose a valid integer corresponding to the number of desired option.")
 

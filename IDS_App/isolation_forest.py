@@ -1,3 +1,4 @@
+import os
 import psutil
 import GPUtil
 import time
@@ -8,11 +9,13 @@ from sklearn.ensemble import IsolationForest
 
 class IsolationForestMonitor:
 
-    def __init__(self):
-        usage_data = self.collect_usage_data()
+    def __init__(self, load_existing=False):
+        if load_existing and os.path.exists("usage_data.csv"):
+            usage_data = self.load_usage_data()
+        else:
+            usage_data = self.collect_usage_data()
 
         # Save with index (timestamp) included
-        usage_data.set_index('timestamp', inplace=True)
         usage_data.to_csv("usage_data.csv", index=True)
 
         self.usage_data_resampled = usage_data.resample('1min').mean()
@@ -33,7 +36,13 @@ class IsolationForestMonitor:
         self.model = IsolationForest(contamination=0.01)  # small % to reduce false positives; subject to change
         self.model.fit(self.normalized_data.values)
 
-    def collect_usage_data(self, duration=3600, interval=5):  # anomaly detection will begin after the first duration
+    def load_usage_data(self):
+        usage_data = pd.read_csv("usage_data.csv")
+        usage_data['timestamp'] = pd.to_datetime(usage_data['timestamp'])
+        usage_data.set_index('timestamp', inplace=True)
+        return usage_data
+
+    def collect_usage_data(self, duration=60, interval=5):  # anomaly detection will begin after the first duration
         data = []
         start_time = time.time()
         while time.time() - start_time < duration:
