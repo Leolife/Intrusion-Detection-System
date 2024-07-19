@@ -14,14 +14,15 @@ class IsolationForestMonitor:
             usage_data = self.load_usage_data()
         else:
             usage_data = self.collect_usage_data()
+            usage_data.set_index('timestamp', inplace=True)
 
         # Save with index (timestamp) included
         usage_data.to_csv("usage_data.csv", index=True)
 
-        self.usage_data_resampled = usage_data.resample('1min').mean()
+        self.usage_data = usage_data
 
         # Handle potential division by zero during normalization
-        self.normalized_data = self.usage_data_resampled.copy()
+        self.normalized_data = self.usage_data.copy()
         for column in self.normalized_data.columns:
             mean = self.normalized_data[column].mean()
             std = self.normalized_data[column].std()
@@ -42,7 +43,7 @@ class IsolationForestMonitor:
         usage_data.set_index('timestamp', inplace=True)
         return usage_data
 
-    def collect_usage_data(self, duration=60, interval=5):  # anomaly detection will begin after the first duration
+    def collect_usage_data(self, duration=3600, interval=5):  # anomaly detection will begin after the first duration
         data = []
         start_time = time.time()
         while time.time() - start_time < duration:
@@ -83,8 +84,8 @@ class IsolationForestMonitor:
 
             normalized_current = current_data_df.copy()
             for column in normalized_current.columns:
-                mean = self.usage_data_resampled[column].mean()
-                std = self.usage_data_resampled[column].std()
+                mean = self.usage_data[column].mean()
+                std = self.usage_data[column].std()
                 if std == 0:
                     normalized_current[column] = 0
                 else:
@@ -101,7 +102,7 @@ class IsolationForestMonitor:
 
             prediction = self.model.predict(normalized_current_array)
 
-            latest_resampled = self.usage_data_resampled.iloc[-1]
+            latest_resampled = self.usage_data.iloc[-1]
             if isinstance(gpu_usage, (int, float)):
                 is_above_baseline = (current_data_df.values[0] > latest_resampled.values).any()
             else:
@@ -136,8 +137,11 @@ class IsolationForestMonitor:
         # Ensure gpu_usage is numeric
         new_data['gpu_usage'] = pd.to_numeric(new_data['gpu_usage'], errors='coerce')
 
+        # Resample new data to match existing data
+        #new_data_resampled = new_data.resample('1min').mean()
+
         # Combine with existing data (without resampling)
-        combined_data = pd.concat([self.usage_data_resampled, new_data])
+        combined_data = pd.concat([self.usage_data, new_data])
 
         # Handle potential division by zero during normalization
         self.normalized_data = combined_data.copy()
@@ -159,8 +163,8 @@ class IsolationForestMonitor:
         normalized_data_array = self.normalized_data.values.astype(np.float64)
 
         self.model.fit(normalized_data_array)
-        self.usage_data_resampled = combined_data
-        self.usage_data_resampled.to_csv("usage_data.csv", index=True)
+        self.usage_data = combined_data
+        self.usage_data.to_csv("usage_data.csv", index=True)
         print(f"{pd.Timestamp.now()}: Model retrained with new data.\n")  # printed to terminal
         with open("retraining_logs.txt", "a") as file:
             file.write(f"{pd.Timestamp.now()}: Model retrained with new data.\n")
