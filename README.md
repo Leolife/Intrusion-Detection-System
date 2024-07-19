@@ -1,5 +1,5 @@
 # Intrusion-Detection-System
-Intrusion detection system to bypass logic checks in malware that check for common malware analysis and monitoring tools.
+Intrusion detection system to bypass logic checks in malware that check for common malware analysis and monitoring tools.  Anomaly detection is used in attempt to detect fileless malware.
 
 ## Features
 - CPU, GPU, network, and memory usage monitor that uses machine learning (Isolation Forest algorithm) to detect anomalies in their usage and upon detection will log running processes and 
