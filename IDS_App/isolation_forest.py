@@ -1,6 +1,6 @@
 import os
 import psutil
-import GPUtil
+import pynvml
 import time
 import pandas as pd
 import numpy as np
@@ -53,7 +53,7 @@ class IsolationForestMonitor:
             net_io = psutil.net_io_counters()
             net_usage = (net_io.bytes_sent + net_io.bytes_recv) / (1024 * 1024)  # in MB
             try:  # ensure that there exists GPU(s) on the machine
-                gpus = GPUtil.getGPUs()
+                gpus = pynvml.getGPUs()
                 gpu_usage = gpus[0].load * 100 if gpus else 0
             except:
                 gpu_usage = 0
@@ -71,7 +71,7 @@ class IsolationForestMonitor:
             net_io = psutil.net_io_counters()
             net_usage = (net_io.bytes_sent + net_io.bytes_recv) / (1024 * 1024)  # in MB
             try:  # ensure that there exists GPU(s) on the machine
-                gpus = GPUtil.getGPUs()
+                gpus = pynvml.getGPUs()
                 gpu_usage = gpus[0].load * 100 if gpus else 0
             except:
                 gpu_usage = 0

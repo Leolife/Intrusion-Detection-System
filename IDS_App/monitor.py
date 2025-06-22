@@ -1,5 +1,5 @@
 import datetime
-import GPUtil
+import pynvml
 import psutil
 import time
 
@@ -51,14 +51,14 @@ class Monitor:
 
         # Get GPU usage per process (approximation b/c it's difficult to get precise per-process GPU usage)
         try:
-            gpus = GPUtil.getGPUs()
+            gpus = pynvml.getGPUs()
             for gpu in gpus:
                 gpu_processes = gpu.getComputeProcesses()
                 for gpu_proc in gpu_processes:
                     if gpu_proc['pid'] in processes:
                         processes[gpu_proc['pid']]['gpu_percent'] = gpu_proc['gpu_memory_percent']
         except:
-            pass  # GPUtil might not be available or no GPU present
+            pass  # pynvml might not be available or no GPU present
 
         # Fill in GPU percent for processes not using GPU
         for pid in processes:
