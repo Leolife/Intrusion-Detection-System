@@ -19,11 +19,11 @@ system metrics for further forensic analysis
 - **If you have not changed anything, locate line 26 of port_scan.py and change the timeout length to desired scan time length**
 - This script needs to be run as root in order to access raw sockets for port scanning purposes and for CPU monitoring.  In order to accomplish this, do the following:
   1) On your command line, go to the your folder containing the this Intrusion-Detection-System python files
-  2) Install '[scapy](https://github.com/secdev/scapy)', '[pandas](https://github.com/pandas-dev/pandas)', '[scikit-learn](https://github.com/scikit-learn/scikit-learn)', '[GPUtil](https://github.com/anderskm/gputil)',
+  2) Install '[scapy](https://github.com/secdev/scapy)', '[pandas](https://github.com/pandas-dev/pandas)', '[scikit-learn](https://github.com/scikit-learn/scikit-learn)', '[pynvml](https://github.com/gpuopenanalytics/pynvml)',
 libraries for python in sudo with following commands:
      - sudo pip install scapy
      - sudo pip install pandas
      - sudo pip install scikit-learn
-     - sudo pip install GPUtil
+     - sudo pip install pynvml
   3) Run main.py as root with the following command:
      - sudo python3 main.py

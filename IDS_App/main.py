@@ -50,6 +50,7 @@ def main():
         print("\n--Port Scan--\n")
         file_name = input("Output file name: ")
         file_path = create_file("", dir_name, parent_dir_path, file_name)  # create file first to get path
+        print("Scanning... (Ctrl+C to quit)")
         with open(file_path, "a") as file_handle:  # open file in append mode for real-time updates
             scan = port_scan.PortScan(file_handle)
             scan.search_for_packets()

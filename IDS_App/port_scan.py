@@ -23,7 +23,7 @@ class PortScan:
                     self.file_handle.flush()  # ensures data is written to file immediately
 
     def search_for_packets(self):
-        sniff(filter="tcp", prn=self.packet_filter, timeout=10)  # change timeout length here to adjust scan time
+        sniff(filter="tcp", prn=self.packet_filter)  # no 'timeout' specification, so this runs until user enters Ctrl+C (indicated in main.py)
         if self.file_handle.tell() == 0:  # Check if nothing has been written to the file
             timestamp = datetime.now()
             self.file_handle.write(f"{timestamp}: No traffic found on ports 80, 21, 23, 25, 69, 110, 161, 162")
