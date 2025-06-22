@@ -16,7 +16,6 @@ system metrics for further forensic analysis
 - Results of any feature to be printed onto a file in a directory of your choice (can be input during runtime of program)
 
 ## Setup & Run Instructions
-- **If you have not changed anything, locate line 26 of port_scan.py and change the timeout length to desired scan time length**
 - This script needs to be run as root in order to access raw sockets for port scanning purposes and for CPU monitoring.  In order to accomplish this, do the following:
   1) On your command line, go to the your folder containing the this Intrusion-Detection-System python files
   2) Install '[scapy](https://github.com/secdev/scapy)', '[pandas](https://github.com/pandas-dev/pandas)', '[scikit-learn](https://github.com/scikit-learn/scikit-learn)', '[pynvml](https://github.com/gpuopenanalytics/pynvml)',
