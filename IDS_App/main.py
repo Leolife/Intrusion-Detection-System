@@ -35,8 +35,8 @@ def main():
     dir_name = input("Name of desired directory for results: ")
     parent_dir_path = input("Parent directory path: ")
     option = (input("\nChoose an option:\n\t1) Check for specific processes\n\t"
-                    "2) Port Scan\n\t3) Monitor CPU without existing data\n\t"
-                    "4) Monitor CPU with existing data\n\t >> "))
+                    "2) Port Scan\n\t3) Monitor Device without existing data\n\t"
+                    "4) Monitor Device with existing data\n\t >> "))
     if option == "1":  # check for specific processes
         results = ""
         print("\n--Process Checker--\n")
