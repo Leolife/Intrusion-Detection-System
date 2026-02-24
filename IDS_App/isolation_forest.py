@@ -34,8 +34,13 @@ class IsolationForestMonitor:
         # Remove any remaining NaN values
         self.normalized_data = self.normalized_data.fillna(0)
 
-        self.model = IsolationForest(contamination=0.01)  # small % to reduce false positives; subject to change
+        self.model = IsolationForest(contamination='auto')
         self.model.fit(self.normalized_data.values)
+
+        # Compute a score threshold from the training data so that ~1% of
+        # training samples would be flagged as anomalies.
+        training_scores = self.model.decision_function(self.normalized_data.values)
+        self.score_threshold = np.percentile(training_scores, 1)
 
     def load_usage_data(self):
         usage_data = pd.read_csv("usage_data.csv")
@@ -100,14 +105,7 @@ class IsolationForestMonitor:
             # Ensure the data is in the correct format for the model
             normalized_current_array = normalized_current.values.astype(np.float64)
 
-            prediction = self.model.predict(normalized_current_array)
-
-            latest_resampled = self.usage_data.iloc[-1]
-            if isinstance(gpu_usage, (int, float)):
-                is_above_baseline = (current_data_df.values[0] > latest_resampled.values).any()
-            else:
-                # If GPU usage is "N/A" compare only CPU, Memory, Network
-                is_above_baseline = (current_data_df.values[0][:3] > latest_resampled.values[:3]).any()
+            anomaly_score = self.model.decision_function(normalized_current_array)[0]
 
             threshold_exceeded = (  # only want to apply the threshold to CPU, memory, and GPU
                     cpu_usage > threshold or
@@ -115,8 +113,9 @@ class IsolationForestMonitor:
                     (isinstance(gpu_usage, (int, float)) and gpu_usage > threshold)
             )
 
-            if threshold_exceeded or (is_above_baseline and prediction == -1):
-                anomaly_message = (f"Anomaly detected at {current_time}: \n\tCPU: {cpu_usage}% "
+            if threshold_exceeded or anomaly_score < self.score_threshold:
+                anomaly_message = (f"Anomaly detected at {current_time} (score: {anomaly_score:.4f}): "
+                                   f"\n\tCPU: {cpu_usage}% "
                                    f"\n\tMemory: {mem_usage}% \n\tNetwork: {net_usage:.2f} MB "
                                    f"\n\tGPU: {gpu_usage}{'%' if isinstance(gpu_usage, (int, float)) else ''}")
                 callback(anomaly_message)
@@ -163,6 +162,8 @@ class IsolationForestMonitor:
         normalized_data_array = self.normalized_data.values.astype(np.float64)
 
         self.model.fit(normalized_data_array)
+        training_scores = self.model.decision_function(normalized_data_array)
+        self.score_threshold = np.percentile(training_scores, 1)
         self.usage_data = combined_data
         self.usage_data.to_csv("usage_data.csv", index=True)
         print(f"{pd.Timestamp.now()}: Model retrained with new data.\n")  # printed to terminal
