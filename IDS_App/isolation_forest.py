@@ -20,33 +20,38 @@ class IsolationForestMonitor:
         usage_data.to_csv("usage_data.csv", index=True)
 
         self.usage_data = usage_data
-
-        # Handle potential division by zero during normalization
-        self.normalized_data = self.usage_data.copy()
-        for column in self.normalized_data.columns:
-            mean = self.normalized_data[column].mean()
-            std = self.normalized_data[column].std()
-            if std == 0:
-                self.normalized_data[column] = 0  # or another appropriate value
-            else:
-                self.normalized_data[column] = (self.normalized_data[column] - mean) / std
-
-        # Remove any remaining NaN values
-        self.normalized_data = self.normalized_data.fillna(0)
-
-        self.model = IsolationForest(contamination='auto')
-        self.model.fit(self.normalized_data.values)
-
-        # Compute a score threshold from the training data so that ~1% of
-        # training samples would be flagged as anomalies.
-        training_scores = self.model.decision_function(self.normalized_data.values)
-        self.score_threshold = np.percentile(training_scores, 1)
+        self._fit_model(self.usage_data)
 
     def load_usage_data(self):
         usage_data = pd.read_csv("usage_data.csv")
         usage_data['timestamp'] = pd.to_datetime(usage_data['timestamp'])
         usage_data.set_index('timestamp', inplace=True)
         return usage_data
+
+    def _compute_norm_stats(self, data_values):
+        """Compute and cache mean/std as numpy arrays for fast normalization."""
+        self._norm_mean = np.nanmean(data_values, axis=0)
+        self._norm_std = np.nanstd(data_values, axis=0, ddof=1)
+        # Avoid division by zero: where std is 0, set to 1 (result will be 0 - 0 / 1 = 0)
+        self._norm_std[self._norm_std == 0] = 1.0
+
+    def _normalize(self, values):
+        """Z-score normalize using cached mean/std. Works on 1-D or 2-D arrays."""
+        result = (values - self._norm_mean) / self._norm_std
+        result = np.nan_to_num(result, nan=0.0, posinf=0.0, neginf=0.0)
+        return result
+
+    def _fit_model(self, data):
+        """Compute normalization stats, normalize data, fit model, and set score threshold."""
+        data_values = data.values.astype(np.float64)
+        self._compute_norm_stats(data_values)
+        normalized = self._normalize(data_values)
+
+        self.model = IsolationForest(contamination='auto')
+        self.model.fit(normalized)
+
+        training_scores = self.model.decision_function(normalized)
+        self.score_threshold = np.percentile(training_scores, 1)
 
     def collect_usage_data(self, duration=3600, interval=5):  # anomaly detection will begin after the first duration
         data = []
@@ -84,26 +89,8 @@ class IsolationForestMonitor:
             current_usage = [cpu_usage, mem_usage, net_usage, gpu_usage]
             new_data.append((current_time, *current_usage))
 
-            current_data_df = pd.DataFrame([current_usage],
-                                           columns=['cpu_usage', 'mem_usage', 'net_usage', 'gpu_usage'])
-
-            normalized_current = current_data_df.copy()
-            for column in normalized_current.columns:
-                mean = self.usage_data[column].mean()
-                std = self.usage_data[column].std()
-                if std == 0:
-                    normalized_current[column] = 0
-                else:
-                    normalized_current[column] = (normalized_current[column] - mean) / std
-
-            # Replace any infinite values with 0
-            normalized_current = normalized_current.replace([np.inf, -np.inf], 0)
-
-            # Fill any remaining NaN values with 0
-            normalized_current = normalized_current.fillna(0)
-
-            # Ensure the data is in the correct format for the model
-            normalized_current_array = normalized_current.values.astype(np.float64)
+            current_array = np.array(current_usage, dtype=np.float64).reshape(1, -1)
+            normalized_current_array = self._normalize(current_array)
 
             anomaly_score = self.model.decision_function(normalized_current_array)[0]
 
@@ -142,28 +129,7 @@ class IsolationForestMonitor:
         # Combine with existing data (without resampling)
         combined_data = pd.concat([self.usage_data, new_data])
 
-        # Handle potential division by zero during normalization
-        self.normalized_data = combined_data.copy()
-        for column in self.normalized_data.columns:
-            mean = self.normalized_data[column].mean()
-            std = self.normalized_data[column].std()
-            if std == 0:
-                self.normalized_data[column] = 0  # or another appropriate value
-            else:
-                self.normalized_data[column] = (self.normalized_data[column] - mean) / std
-
-        # Replace any infinite values with 0
-        self.normalized_data = self.normalized_data.replace([np.inf, -np.inf], 0)
-
-        # Remove any remaining NaN values
-        self.normalized_data = self.normalized_data.fillna(0)
-
-        # Ensure the data is in the correct format for the model
-        normalized_data_array = self.normalized_data.values.astype(np.float64)
-
-        self.model.fit(normalized_data_array)
-        training_scores = self.model.decision_function(normalized_data_array)
-        self.score_threshold = np.percentile(training_scores, 1)
+        self._fit_model(combined_data)
         self.usage_data = combined_data
         self.usage_data.to_csv("usage_data.csv", index=True)
         print(f"{pd.Timestamp.now()}: Model retrained with new data.\n")  # printed to terminal
